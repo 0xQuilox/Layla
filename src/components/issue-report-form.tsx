@@ -1,8 +1,8 @@
+
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState, useEffect, useRef } from 'react'; // Added useState
 import { useFormStatus } from 'react-dom';
-import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -63,9 +63,13 @@ export function IssueReportForm({ onDiagnosisResult }: IssueReportFormProps) {
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
 
+  // State to hold current input values
+  const [currentDeviceType, setCurrentDeviceType] = useState('');
+  const [currentIssueDescription, setCurrentIssueDescription] = useState('');
+
   useEffect(() => {
     if (state.message) {
-      onDiagnosisResult(state); // Always pass the state up
+      onDiagnosisResult(state);
       if (state.success && state.diagnosis) {
         toast({
           title: "Diagnosis Complete!",
@@ -73,13 +77,12 @@ export function IssueReportForm({ onDiagnosisResult }: IssueReportFormProps) {
           variant: "default",
           action: <CheckCircle2 className="text-green-500" />,
         });
-        // Optionally reset form if needed, though useActionState usually handles rerenders
-        // formRef.current?.reset(); // This might be too aggressive
+        // Values are retained due to controlled components, no explicit reset needed unless desired
       } else if (!state.success) {
          toast({
-          title: "Diagnosis Information", // Changed from "Failed" as it might be "no results"
+          title: "Diagnosis Information",
           description: state.message,
-          variant: state.fields ? "destructive" : "default", // Destructive only if validation error
+          variant: state.fields ? "destructive" : "default",
           action: <AlertCircle className={state.fields ? "text-red-500" : "text-yellow-500"} />,
         });
       }
@@ -98,7 +101,12 @@ export function IssueReportForm({ onDiagnosisResult }: IssueReportFormProps) {
         <form ref={formRef} action={formAction} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="deviceType" className="text-foreground/90 font-medium">Device Type</Label>
-            <Select name="deviceType" required>
+            <Select 
+              name="deviceType" 
+              required
+              value={currentDeviceType}
+              onValueChange={setCurrentDeviceType}
+            >
               <SelectTrigger id="deviceType" className="w-full bg-input border-border focus:ring-primary text-base py-3 h-auto">
                 <SelectValue placeholder="Select device type..." />
               </SelectTrigger>
@@ -128,6 +136,8 @@ export function IssueReportForm({ onDiagnosisResult }: IssueReportFormProps) {
               rows={6}
               required
               className="bg-input border-border focus:ring-primary placeholder:text-muted-foreground/70 text-base"
+              value={currentIssueDescription}
+              onChange={(e) => setCurrentIssueDescription(e.target.value)}
             />
             {state.fields?.issueDescription && <p className="text-sm text-destructive mt-1">{state.fields.issueDescription[0]}</p>}
           </div>
