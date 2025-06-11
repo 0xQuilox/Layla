@@ -27,7 +27,7 @@ export default function HomePage() {
         <section className="text-center space-y-4 sm:space-y-6">
           <Image 
             src="https://placehold.co/240x120.png" 
-            alt="Layla Tech Support AI Assistant" 
+            alt="Layla AI Assistant" 
             width={240} 
             height={120} 
             className="mx-auto mb-4 sm:mb-6 rounded-xl shadow-xl border-2 border-primary/30"
@@ -35,7 +35,7 @@ export default function HomePage() {
             priority
           />
           <p className="text-lg sm:text-xl md:text-2xl text-foreground/90 leading-relaxed max-w-3xl mx-auto px-2">
-            Facing a tech hiccup? Describe your issue and let Layla, your AI-powered tech assistant, guide you to a solution.
+            Facing a tech hiccup? Describe your issue and let Layla, your AI-powered assistant, guide you to a solution.
           </p>
         </section>
         

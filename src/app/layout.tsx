@@ -4,8 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { AppHeader } from '@/components/header';
 
 export const metadata: Metadata = {
-  title: 'Layla Tech Support',
-  description: 'AI-powered technical support for your devices.',
+  title: 'Layla',
+  description: 'Your AI-powered assistant.',
 };
 
 export default function RootLayout({

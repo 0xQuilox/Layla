@@ -34,7 +34,7 @@ export function SolutionDisplay({ diagnosis }: SolutionDisplayProps) {
       <CardHeader className="text-center border-b border-border pb-6">
         <Lightbulb className="inline-block mr-2 h-10 w-10 text-primary mx-auto mb-2" />
         <CardTitle className="text-2xl sm:text-3xl font-headline text-primary">
-          AI Diagnosis Results
+          Layla's Diagnosis
         </CardTitle>
         <CardDescription className="text-muted-foreground px-2">
           Here's what Layla found based on your report. Review these suggestions carefully.
