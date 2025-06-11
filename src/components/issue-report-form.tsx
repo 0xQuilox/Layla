@@ -98,9 +98,9 @@ export function IssueReportForm({ onDiagnosisResult, setIsLoading }: IssueReport
   return (
     <Card className="w-full max-w-xl mx-auto shadow-2xl bg-card border-border">
       <CardHeader>
-        <CardTitle className="text-2xl sm:text-3xl font-headline text-center text-primary">Describe Your Issue to Medira</CardTitle>
+        <CardTitle className="text-2xl sm:text-3xl font-headline text-center text-primary">Describe Your Issue to Layla</CardTitle>
         <CardDescription className="text-center text-muted-foreground px-2">
-          Describe the problem you're facing, and Medira will try to diagnose it. The more details, the better!
+          Describe the problem you're facing, and Layla will try to diagnose it. The more details, the better!
         </CardDescription>
       </CardHeader>
       <CardContent>

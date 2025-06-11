@@ -5,8 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { AppHeader } from '@/components/header';
 
 export const metadata: Metadata = {
-  title: 'Medira',
-  description: 'Medira - Your AI-powered assistant.',
+  title: 'Layla',
+  description: 'Layla - Your AI-powered assistant.',
 };
 
 export default function RootLayout({
