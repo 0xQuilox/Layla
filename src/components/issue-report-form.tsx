@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useActionState, useState, useEffect, useRef } from 'react'; // Added useState
+import { useActionState, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -56,16 +56,22 @@ function SubmitButton() {
 
 interface IssueReportFormProps {
   onDiagnosisResult: (result: DiagnoseFormState) => void;
+  setIsLoading: (loading: boolean) => void; // Prop to update loading state in parent
 }
 
-export function IssueReportForm({ onDiagnosisResult }: IssueReportFormProps) {
+export function IssueReportForm({ onDiagnosisResult, setIsLoading }: IssueReportFormProps) {
   const [state, formAction] = useActionState(handleDiagnoseIssue, initialState);
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
+  const { pending } = useFormStatus(); // Get pending state for the form
 
   // State to hold current input values
   const [currentDeviceType, setCurrentDeviceType] = useState('');
   const [currentIssueDescription, setCurrentIssueDescription] = useState('');
+
+  useEffect(() => {
+    setIsLoading(pending); // Update parent's loading state
+  }, [pending, setIsLoading]);
 
   useEffect(() => {
     if (state.message) {
@@ -77,7 +83,7 @@ export function IssueReportForm({ onDiagnosisResult }: IssueReportFormProps) {
           variant: "default",
           action: <CheckCircle2 className="text-green-500" />,
         });
-        // Values are retained due to controlled components, no explicit reset needed unless desired
+        // Values are retained due to controlled components
       } else if (!state.success) {
          toast({
           title: "Diagnosis Information",
@@ -92,17 +98,17 @@ export function IssueReportForm({ onDiagnosisResult }: IssueReportFormProps) {
   return (
     <Card className="w-full max-w-xl mx-auto shadow-2xl bg-card border-border">
       <CardHeader>
-        <CardTitle className="text-2xl sm:text-3xl font-headline text-center text-primary">Describe Your Issue to Layla</CardTitle>
+        <CardTitle className="text-2xl sm:text-3xl font-headline text-center text-primary">Describe Your Issue to Medira</CardTitle>
         <CardDescription className="text-center text-muted-foreground px-2">
-          Describe the problem you're facing, and Layla will try to diagnose it. The more details, the better!
+          Describe the problem you're facing, and Medira will try to diagnose it. The more details, the better!
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form ref={formRef} action={formAction} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="deviceType" className="text-foreground/90 font-medium">Device Type</Label>
-            <Select 
-              name="deviceType" 
+            <Select
+              name="deviceType"
               required
               value={currentDeviceType}
               onValueChange={setCurrentDeviceType}
@@ -141,7 +147,7 @@ export function IssueReportForm({ onDiagnosisResult }: IssueReportFormProps) {
             />
             {state.fields?.issueDescription && <p className="text-sm text-destructive mt-1">{state.fields.issueDescription[0]}</p>}
           </div>
-          
+
           <SubmitButton />
 
           {state.message && !state.success && !state.fields && (

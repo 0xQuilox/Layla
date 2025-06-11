@@ -1,11 +1,12 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AppHeader } from '@/components/header';
 
 export const metadata: Metadata = {
-  title: 'Layla',
-  description: 'Your AI-powered assistant.',
+  title: 'Medira',
+  description: 'Medira - Your AI-powered assistant.',
 };
 
 export default function RootLayout({

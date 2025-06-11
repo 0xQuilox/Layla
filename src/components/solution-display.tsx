@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { AlertTriangle, Lightbulb, ListChecks, CheckSquare, ExternalLink } from 'lucide-react';
@@ -34,10 +35,10 @@ export function SolutionDisplay({ diagnosis }: SolutionDisplayProps) {
       <CardHeader className="text-center border-b border-border pb-6">
         <Lightbulb className="inline-block mr-2 h-10 w-10 text-primary mx-auto mb-2" />
         <CardTitle className="text-2xl sm:text-3xl font-headline text-primary">
-          Layla's Diagnosis
+          Medira's Diagnosis
         </CardTitle>
         <CardDescription className="text-muted-foreground px-2">
-          Here's what Layla found based on your report. Review these suggestions carefully.
+          Here's what Medira found based on your report. Review these suggestions carefully.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-8 p-6 sm:p-8">
