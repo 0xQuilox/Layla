@@ -1,6 +1,7 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react'; // Updated import for useActionState
+import { useFormStatus } from 'react-dom'; // Corrected import for useFormStatus
 import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -58,7 +59,7 @@ interface IssueReportFormProps {
 }
 
 export function IssueReportForm({ onDiagnosisResult }: IssueReportFormProps) {
-  const [state, formAction] = useFormState(handleDiagnoseIssue, initialState);
+  const [state, formAction] = useActionState(handleDiagnoseIssue, initialState);
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -72,7 +73,7 @@ export function IssueReportForm({ onDiagnosisResult }: IssueReportFormProps) {
           variant: "default",
           action: <CheckCircle2 className="text-green-500" />,
         });
-        // Optionally reset form if needed, though useFormState usually handles rerenders
+        // Optionally reset form if needed, though useActionState usually handles rerenders
         // formRef.current?.reset(); // This might be too aggressive
       } else if (!state.success) {
          toast({
