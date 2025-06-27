@@ -11,6 +11,10 @@ run = ["sh", "-c", "npm run dev"]
 localPort = 9002
 externalPort = 80
 
+[[ports]]
+localPort = 19000
+externalPort = 3000
+
 [workflows]
 runButton = "Start Mobile App"
 
