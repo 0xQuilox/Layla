@@ -10,3 +10,33 @@ run = ["sh", "-c", "npm run dev"]
 [[ports]]
 localPort = 9002
 externalPort = 80
+
+[workflows]
+runButton = "Start Mobile App"
+
+[[workflows.workflow]]
+name = "Start Mobile App"
+author = 14246877
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm start"
+
+[[workflows.workflow]]
+name = "Start Backend"
+author = 14246877
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+
+[[workflows.workflow]]
+name = "Start Backend"
+author = 14246877
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
