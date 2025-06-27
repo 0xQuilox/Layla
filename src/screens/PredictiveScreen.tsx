@@ -9,13 +9,18 @@ import {
   SafeAreaView,
   Alert,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Battery from 'expo-battery';
 import * as Device from 'expo-device';
+import { useTheme } from '../context/ThemeContext';
 import { collectDeviceMetrics, predictDeviceHealth } from '../services/api';
 
+const { width, height } = Dimensions.get('window');
+
 export default function PredictiveScreen() {
+  const { colors } = useTheme();
   const [deviceMetrics, setDeviceMetrics] = useState(null);
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -26,35 +31,36 @@ export default function PredictiveScreen() {
     try {
       const batteryLevel = await Battery.getBatteryLevelAsync();
       const batteryState = await Battery.getBatteryStateAsync();
-      const isLowPowerMode = await Battery.isLowPowerModeEnabledAsync();
+      const powerState = await Battery.getPowerStateAsync();
       
       const metrics = {
-        batteryLevel: Math.round(batteryLevel * 100),
-        batteryState: batteryState,
-        isLowPowerMode: isLowPowerMode,
-        deviceType: Device.deviceType,
-        deviceName: Device.deviceName,
-        osVersion: Device.osVersion,
-        platform: Device.osName,
-        totalMemory: Device.totalMemory,
-        // Simulated metrics for demo purposes
-        cpuUsage: Math.round(Math.random() * 100),
-        storageUsage: Math.round(Math.random() * 100),
-        temperature: Math.round(25 + Math.random() * 20), // 25-45°C
-        networkLatency: Math.round(10 + Math.random() * 200), // 10-210ms
+        device_type: Device.deviceType?.toString() || 'unknown',
+        device_name: Device.deviceName || 'Unknown Device',
+        os_name: Device.osName || 'Unknown OS',
+        os_version: Device.osVersion || 'Unknown Version',
+        battery_level: Math.round(batteryLevel * 100),
+        battery_state: batteryState,
+        is_charging: powerState.batteryState === Battery.BatteryState.CHARGING,
+        total_memory: Device.totalMemory || 0,
+        brand: Device.brand || 'Unknown',
+        model_name: Device.modelName || 'Unknown Model',
       };
 
       setDeviceMetrics(metrics);
+      
+      const result = await collectDeviceMetrics(metrics);
+      Alert.alert('Success', 'Device metrics collected successfully!');
     } catch (error) {
-      Alert.alert('Error', 'Failed to collect device metrics.');
+      Alert.alert('Error', 'Failed to collect device metrics. Please try again.');
+      console.error('Metrics collection error:', error);
     } finally {
       setCollecting(false);
     }
   };
 
-  const runPrediction = async () => {
+  const predictHealth = async () => {
     if (!deviceMetrics) {
-      Alert.alert('No Data', 'Please collect device metrics first.');
+      Alert.alert('Error', 'Please collect device metrics first.');
       return;
     }
 
@@ -64,69 +70,223 @@ export default function PredictiveScreen() {
       setPrediction(result);
     } catch (error) {
       Alert.alert('Error', 'Failed to predict device health. Please try again.');
+      console.error('Prediction error:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    collectMetrics();
-  }, []);
-
-  const getHealthColor = (score) => {
-    if (score >= 80) return '#4CAF50'; // Green
-    if (score >= 60) return '#FFD700'; // Yellow
-    if (score >= 40) return '#FF9800'; // Orange
-    return '#F44336'; // Red
+  const getBatteryIcon = () => {
+    if (!deviceMetrics) return 'battery-half';
+    const level = deviceMetrics.battery_level;
+    if (level > 75) return 'battery-full';
+    if (level > 50) return 'battery-half';
+    if (level > 25) return 'battery-dead';
+    return 'battery-dead';
   };
 
-  const getHealthStatus = (score) => {
-    if (score >= 80) return 'Excellent';
-    if (score >= 60) return 'Good';
-    if (score >= 40) return 'Fair';
-    return 'Poor';
+  const getHealthColor = (score: number) => {
+    if (score >= 80) return '#4CAF50';
+    if (score >= 60) return '#FF9800';
+    return '#F44336';
   };
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollContainer: {
+      flexGrow: 1,
+      padding: width * 0.05,
+    },
+    metricsContainer: {
+      backgroundColor: colors.surface,
+      padding: width * 0.05,
+      borderRadius: 20,
+      marginBottom: height * 0.025,
+      elevation: 3,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    },
+    sectionTitle: {
+      fontSize: Math.min(width * 0.05, 20),
+      fontWeight: 'bold',
+      color: colors.primary,
+      marginBottom: 20,
+      textAlign: 'center',
+    },
+    metricsGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      marginBottom: 20,
+    },
+    metricCard: {
+      backgroundColor: colors.background,
+      padding: 15,
+      borderRadius: 15,
+      alignItems: 'center',
+      width: width < 400 ? '100%' : '48%',
+      marginBottom: 10,
+      elevation: 2,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+    },
+    metricLabel: {
+      fontSize: Math.min(width * 0.035, 14),
+      color: colors.text,
+      marginTop: 5,
+      opacity: 0.8,
+      textAlign: 'center',
+    },
+    metricValue: {
+      fontSize: Math.min(width * 0.045, 18),
+      fontWeight: 'bold',
+      color: colors.text,
+      marginTop: 5,
+      textAlign: 'center',
+    },
+    collectButton: {
+      backgroundColor: colors.secondary,
+      padding: 18,
+      borderRadius: 25,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 10,
+      elevation: 5,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+    },
+    collectButtonDisabled: {
+      opacity: 0.7,
+    },
+    collectButtonText: {
+      fontSize: Math.min(width * 0.04, 16),
+      fontWeight: 'bold',
+      color: '#333333',
+    },
+    predictionContainer: {
+      backgroundColor: colors.surface,
+      padding: width * 0.05,
+      borderRadius: 20,
+      elevation: 3,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    },
+    predictionResults: {
+      marginBottom: 20,
+    },
+    healthScore: {
+      alignItems: 'center',
+      marginBottom: 20,
+      padding: 20,
+      backgroundColor: colors.background,
+      borderRadius: 15,
+    },
+    scoreNumber: {
+      fontSize: Math.min(width * 0.12, 48),
+      fontWeight: 'bold',
+      marginBottom: 10,
+    },
+    scoreLabel: {
+      fontSize: Math.min(width * 0.04, 16),
+      color: colors.text,
+      opacity: 0.8,
+    },
+    predictButton: {
+      backgroundColor: colors.primary,
+      padding: 18,
+      borderRadius: 25,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 10,
+      marginBottom: 20,
+      elevation: 5,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+    },
+    predictButtonText: {
+      fontSize: Math.min(width * 0.045, 18),
+      fontWeight: 'bold',
+      color: '#333333',
+    },
+    recommendationItem: {
+      backgroundColor: colors.background,
+      padding: 15,
+      borderRadius: 10,
+      marginBottom: 10,
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 10,
+    },
+    recommendationText: {
+      flex: 1,
+      fontSize: Math.min(width * 0.04, 16),
+      color: colors.text,
+      lineHeight: 22,
+    },
+  });
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.metricsContainer}>
           <Text style={styles.sectionTitle}>Device Metrics</Text>
           
           {deviceMetrics ? (
             <View style={styles.metricsGrid}>
               <View style={styles.metricCard}>
-                <Ionicons name="battery-half" size={24} color="#FFD700" />
-                <Text style={styles.metricLabel}>Battery</Text>
-                <Text style={styles.metricValue}>{deviceMetrics.batteryLevel}%</Text>
+                <Ionicons name="phone-portrait" size={30} color={colors.primary} />
+                <Text style={styles.metricValue}>{deviceMetrics.device_name}</Text>
+                <Text style={styles.metricLabel}>Device</Text>
               </View>
               
               <View style={styles.metricCard}>
-                <Ionicons name="speedometer" size={24} color="#7DF9FF" />
-                <Text style={styles.metricLabel}>CPU Usage</Text>
-                <Text style={styles.metricValue}>{deviceMetrics.cpuUsage}%</Text>
+                <Ionicons name={getBatteryIcon()} size={30} color={colors.primary} />
+                <Text style={styles.metricValue}>{deviceMetrics.battery_level}%</Text>
+                <Text style={styles.metricLabel}>Battery Level</Text>
               </View>
               
               <View style={styles.metricCard}>
-                <Ionicons name="save" size={24} color="#FF9800" />
-                <Text style={styles.metricLabel}>Storage</Text>
-                <Text style={styles.metricValue}>{deviceMetrics.storageUsage}%</Text>
+                <Ionicons name="hardware-chip" size={30} color={colors.primary} />
+                <Text style={styles.metricValue}>{deviceMetrics.os_name}</Text>
+                <Text style={styles.metricLabel}>Operating System</Text>
               </View>
               
               <View style={styles.metricCard}>
-                <Ionicons name="thermometer" size={24} color="#F44336" />
-                <Text style={styles.metricLabel}>Temperature</Text>
-                <Text style={styles.metricValue}>{deviceMetrics.temperature}°C</Text>
+                <Ionicons name="build" size={30} color={colors.primary} />
+                <Text style={styles.metricValue}>{deviceMetrics.brand}</Text>
+                <Text style={styles.metricLabel}>Brand</Text>
               </View>
             </View>
           ) : (
-            <ActivityIndicator size="large" color="#FFD700" />
+            <ActivityIndicator size="large" color={colors.primary} />
           )}
 
           <TouchableOpacity
-            style={[styles.collectButton, collecting && styles.collectButtonDisabled]}
+            style={[
+              styles.collectButton,
+              collecting && styles.collectButtonDisabled,
+            ]}
             onPress={collectMetrics}
             disabled={collecting}
+            activeOpacity={0.8}
           >
             {collecting ? (
               <ActivityIndicator size="small" color="#333333" />
@@ -134,226 +294,56 @@ export default function PredictiveScreen() {
               <Ionicons name="refresh" size={24} color="#333333" />
             )}
             <Text style={styles.collectButtonText}>
-              {collecting ? 'Collecting...' : 'Refresh Metrics'}
+              {collecting ? 'Collecting...' : 'Collect Metrics'}
             </Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.predictionContainer}>
-          <Text style={styles.sectionTitle}>Health Prediction</Text>
-          
-          {prediction ? (
-            <View style={styles.predictionResults}>
-              <View style={styles.healthScore}>
-                <Text style={styles.healthScoreLabel}>Overall Health Score</Text>
-                <Text style={[styles.healthScoreValue, { color: getHealthColor(prediction.healthScore) }]}>
-                  {prediction.healthScore}/100
-                </Text>
-                <Text style={[styles.healthStatus, { color: getHealthColor(prediction.healthScore) }]}>
-                  {getHealthStatus(prediction.healthScore)}
-                </Text>
-              </View>
+        {deviceMetrics && (
+          <View style={styles.predictionContainer}>
+            <Text style={styles.sectionTitle}>Health Prediction</Text>
+            
+            <TouchableOpacity
+              style={styles.predictButton}
+              onPress={predictHealth}
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#333333" />
+              ) : (
+                <Ionicons name="analytics" size={24} color="#333333" />
+              )}
+              <Text style={styles.predictButtonText}>
+                {loading ? 'Analyzing...' : 'Predict Health'}
+              </Text>
+            </TouchableOpacity>
 
-              <View style={styles.risksContainer}>
-                <Text style={styles.risksTitle}>Potential Risks</Text>
-                {prediction.risks.map((risk, index) => (
-                  <View key={index} style={styles.riskItem}>
-                    <Ionicons name="warning" size={16} color="#FFD700" />
-                    <Text style={styles.riskText}>{risk}</Text>
-                  </View>
-                ))}
-              </View>
+            {prediction && !loading && (
+              <View style={styles.predictionResults}>
+                <View style={styles.healthScore}>
+                  <Text 
+                    style={[
+                      styles.scoreNumber, 
+                      { color: getHealthColor(prediction.health_score) }
+                    ]}
+                  >
+                    {prediction.health_score}
+                  </Text>
+                  <Text style={styles.scoreLabel}>Health Score</Text>
+                </View>
 
-              <View style={styles.recommendationsContainer}>
-                <Text style={styles.recommendationsTitle}>Recommendations</Text>
-                {prediction.recommendations.map((recommendation, index) => (
+                {prediction.recommendations && prediction.recommendations.map((rec: string, index: number) => (
                   <View key={index} style={styles.recommendationItem}>
-                    <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
-                    <Text style={styles.recommendationText}>{recommendation}</Text>
+                    <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+                    <Text style={styles.recommendationText}>{rec}</Text>
                   </View>
                 ))}
               </View>
-            </View>
-          ) : (
-            <Text style={styles.noDataText}>Run prediction to see device health analysis</Text>
-          )}
-
-          <TouchableOpacity
-            style={[styles.predictButton, loading && styles.predictButtonDisabled]}
-            onPress={runPrediction}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color="#333333" />
-            ) : (
-              <Ionicons name="analytics" size={24} color="#333333" />
             )}
-            <Text style={styles.predictButtonText}>
-              {loading ? 'Predicting...' : 'Run Health Prediction'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#333333',
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    padding: 20,
-  },
-  metricsContainer: {
-    backgroundColor: '#444444',
-    padding: 20,
-    borderRadius: 15,
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  metricsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  metricCard: {
-    backgroundColor: '#555555',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    width: '48%',
-    marginBottom: 10,
-  },
-  metricLabel: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    marginTop: 5,
-    opacity: 0.8,
-  },
-  metricValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginTop: 5,
-  },
-  collectButton: {
-    backgroundColor: '#7DF9FF',
-    padding: 15,
-    borderRadius: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-  },
-  collectButtonDisabled: {
-    opacity: 0.7,
-  },
-  collectButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333333',
-  },
-  predictionContainer: {
-    backgroundColor: '#444444',
-    padding: 20,
-    borderRadius: 15,
-  },
-  predictionResults: {
-    marginBottom: 20,
-  },
-  healthScore: {
-    alignItems: 'center',
-    marginBottom: 20,
-    padding: 20,
-    backgroundColor: '#555555',
-    borderRadius: 10,
-  },
-  healthScoreLabel: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    opacity: 0.8,
-  },
-  healthScoreValue: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    marginVertical: 10,
-  },
-  healthStatus: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  risksContainer: {
-    marginBottom: 20,
-  },
-  risksTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    marginBottom: 10,
-  },
-  riskItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    gap: 10,
-  },
-  riskText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    flex: 1,
-  },
-  recommendationsContainer: {
-    marginBottom: 20,
-  },
-  recommendationsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#7DF9FF',
-    marginBottom: 10,
-  },
-  recommendationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    gap: 10,
-  },
-  recommendationText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    flex: 1,
-  },
-  noDataText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    opacity: 0.7,
-    marginBottom: 20,
-  },
-  predictButton: {
-    backgroundColor: '#FFD700',
-    padding: 15,
-    borderRadius: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-  },
-  predictButtonDisabled: {
-    opacity: 0.7,
-  },
-  predictButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333333',
-  },
-});
